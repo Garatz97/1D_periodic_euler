@@ -7,7 +7,8 @@ template<class T>
 class DataStruct 
 {
   private:
-    int size;
+    int size;          // Número de puntos espaciales (N)
+    int num_vars;      // Número de variables por punto (3 para Euler)
     T *data;
     bool initialized;
 
@@ -17,13 +18,16 @@ class DataStruct
     inline DataStruct()
     {
       size = 0;
+      num_vars = 3; // Inicializamos para Euler
       data = NULL;
       initialized = false;
     };
 
     inline DataStruct(int _size)
     {
-      data = new T[_size];
+      num_vars = 3;
+      // ¡Multiplicamos la memoria reservada por 3!
+      data = new T[_size * num_vars]; 
       size = _size;
       initialized = true;
     };
@@ -49,6 +53,13 @@ class DataStruct
       return data[i];
     }
 
+    // --- NUEVOS MÉTODOS PARA EULER (Enfoque AoS) ---
+    // Devuelven una referencia (T&) para poder leer y escribir en ellos fácilmente
+    inline T& getRho(int i)  { return data[i * num_vars + 0]; }
+    inline T& getRhoU(int i) { return data[i * num_vars + 1]; }
+    inline T& getRhoE(int i) { return data[i * num_vars + 2]; }
+    // -----------------------------------------------
+
     void setSize(int _size);
 
     inline DataStruct<T>& operator=(DataStruct<T> &rhs)
@@ -56,8 +67,8 @@ class DataStruct
       this->setSize(rhs.getSize());
       T *dataRHS = rhs.getData();
 
-      // copy data
-      for(int n = 0; n < size; n++)
+      // copy data (ahora copiamos size * num_vars elementos)
+      for(int n = 0; n < size * num_vars; n++)
       {
         data[n] = dataRHS[n];
       }

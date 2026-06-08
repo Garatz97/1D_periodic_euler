@@ -16,7 +16,7 @@ void DataStruct<T>::setSize(int _size)
     }
   }else
   {
-    data = new T[_size];
+    data = new T[_size*3]; // ¡Multiplicamos la memoria reservada por 3!
     size = _size;
     initialized = true;
   }

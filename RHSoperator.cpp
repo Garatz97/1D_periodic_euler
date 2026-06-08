@@ -6,7 +6,6 @@ RHSOperator<T>::RHSOperator()
 
 }
 
-
 template<class T>
 RHSOperator<T>::~RHSOperator()
 {
@@ -31,30 +30,42 @@ Central1D<T>::~Central1D()
 template<class T>
 void Central1D<T>::evalRHS(DataStruct<T> &Uin)
 {
-  // the BC should be included in the mesh
-  // momentarily done here by hand
-  T *dataRHS = RHS.getData();
-  const T *dataU = Uin.getData();
   const T *dataMesh = mesh.getData();
   const int len = U.getSize();
   
+  // 1. Calculamos todos los flujos del dominio a la vez
+  // IMPORTANTE PARA HPC: Leer nota de abajo.
+  DataStruct<T> flux(len);
+  F.computeFlux(Uin, flux);
+  
+  // 2. Aplicamos diferencias centradas espaciales a las 3 variables
   for(int j = 0; j < len; j++)
   {
     T dx;
-    if(j == 0)
+    if(j == 0) // Condición de contorno periódica (Izquierda)
     {
       dx = dataMesh[len-1] - dataMesh[len-2];
       dx += dataMesh[1] - dataMesh[0];
-      dataRHS[0] = -(F.computeFlux(dataU[1]) - F.computeFlux(dataU[len-2]))/dx;
+      
+      RHS.getRho(0)  = -(flux.getRho(1)  - flux.getRho(len-2))  / dx;
+      RHS.getRhoU(0) = -(flux.getRhoU(1) - flux.getRhoU(len-2)) / dx;
+      RHS.getRhoE(0) = -(flux.getRhoE(1) - flux.getRhoE(len-2)) / dx;
     }
-    else
+    else if (j == len - 1) // Condición de contorno periódica (Derecha)
+    {
+      RHS.getRho(len-1)  = RHS.getRho(0);
+      RHS.getRhoU(len-1) = RHS.getRhoU(0);
+      RHS.getRhoE(len-1) = RHS.getRhoE(0);
+    }
+    else // Nodos interiores
     {
       dx = dataMesh[j+1] - dataMesh[j-1];
-      dataRHS[j] = -(F.computeFlux(dataU[j+1]) - F.computeFlux(dataU[j-1]))/dx;
+      
+      RHS.getRho(j)  = -(flux.getRho(j+1)  - flux.getRho(j-1))  / dx;
+      RHS.getRhoU(j) = -(flux.getRhoU(j+1) - flux.getRhoU(j-1)) / dx;
+      RHS.getRhoE(j) = -(flux.getRhoE(j+1) - flux.getRhoE(j-1)) / dx;
     }
   }
-
-  dataRHS[len-1] = dataRHS[0];
 }
 
 template<class T>
@@ -74,7 +85,6 @@ DataStruct<T>& Central1D<T>::ref2RHS()
 {
   return RHS;
 }
-
 
 template class RHSOperator<float>;
 template class RHSOperator<double>;
