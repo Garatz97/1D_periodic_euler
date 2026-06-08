@@ -42,7 +42,7 @@ int main(int narg, char **argv)
   DataStruct<FLOATTYPE> u(numPoints), f(numPoints), xj(numPoints);
 
   // flux function
-  LinearFlux<FLOATTYPE> lf;
+ EulerFlux<FLOATTYPE> lf;
 
   // time solver
   RungeKutta4<FLOATTYPE> rk(u);
@@ -50,13 +50,18 @@ int main(int narg, char **argv)
   // Initial Condition
   FLOATTYPE *datax = xj.getData();
   FLOATTYPE *dataU = u.getData();
-  for(int j = 0; j < numPoints; j++)
+ for(int j = 0; j < numPoints; j++)
   {
-    // xj
     datax[j] = FLOATTYPE(j)/FLOATTYPE(numPoints-1);
 
-    // init Uj
-    dataU[j] = sin(k*2. * M_PI * datax[j]);
+    // Condición inicial para Euler (Ejemplo: Onda de densidad, velocidad 0, presión base)
+    FLOATTYPE rho = 1.0 + 0.1 * sin(k*2. * M_PI * datax[j]);
+    FLOATTYPE u_vel = 0.0;
+    FLOATTYPE p = 1.0;
+    
+    u.getRho(j)  = rho;
+    u.getRhoU(j) = rho * u_vel;
+    u.getRhoE(j) = p / (1.4 - 1.0) + 0.5 * rho * u_vel * u_vel;
   }
 
   DataStruct<FLOATTYPE> Uinit;
@@ -125,9 +130,10 @@ void write2File(DataStruct<FLOATTYPE> &X, DataStruct<FLOATTYPE> &U, std::string 
     exit(1);
   }
   
+  // Imprimimos la posición X, y luego las 3 variables de Euler usando los métodos
   for(int j = 0; j < U.getSize(); j++)
   {
-    file << X.getData()[j] << " ," << U.getData()[j] << std::endl;
+    file << X.getData()[j] << " ," << U.getRho(j) << " ," << U.getRhoU(j) << " ," << U.getRhoE(j) << std::endl;
   }
 
   file.close();
@@ -139,7 +145,9 @@ FLOATTYPE calcL2norm(DataStruct<FLOATTYPE> &u, DataStruct<FLOATTYPE> &uinit)
   const FLOATTYPE *dataU = u.getData();
   const FLOATTYPE *dataInit = uinit.getData();
 
-  for(int n = 0; n < u.getSize(); n++)
+  int totalElements = u.getSize() * 3; // ¡Multiplicamos por 3!
+
+  for(int n = 0; n < totalElements; n++)
   {
     err += (dataU[n] - dataInit[n])*(dataU[n] - dataInit[n]);
   }

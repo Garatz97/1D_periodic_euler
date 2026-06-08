@@ -54,12 +54,15 @@ void RungeKutta4<T>::stepUi(T dt)
 {
   assert(currentStep < nSteps);
 
+  // Modificado para iterar sobre las 3 variables de Euler 1D
+  int totalElements = Ui.getSize() * 3; 
+
   if(currentStep == 0)
   {
     T *dataUi = Ui.getData();
     const T *dataU  = Un.getData();
 
-    for(int n = 0; n < Ui.getSize(); n++)
+    for(int n = 0; n < totalElements; n++)
     {
       dataUi[n] = dataU[n];
     }
@@ -70,7 +73,7 @@ void RungeKutta4<T>::stepUi(T dt)
     T *dataUi = Ui.getData();
     const T *dataU  = Un.getData();
 
-    for(int n = 0; n < Ui.getSize(); n++)
+    for(int n = 0; n < totalElements; n++)
     {
       dataUi[n] = dataU[n] + coeffsA[currentStep]*dt* datafi[n];
     }
@@ -83,8 +86,10 @@ void RungeKutta4<T>::finalizeRK(const T dt)
   T *dataUn = Un.getData();
   T *dataUi = Ui.getData();
 
+  int totalElements = Ui.getSize() * 3;
+
   // set Ui to 0
-  for(int n = 0; n < Ui.getSize(); n++)
+  for(int n = 0; n < totalElements; n++)
   {
     dataUi[n] = 0.;
   }
@@ -94,14 +99,14 @@ void RungeKutta4<T>::finalizeRK(const T dt)
     const T *dataFi = fi[s].getData();
     const T b = coeffsB[s];
 
-    for(int n = 0; n < Ui.getSize(); n++)
+    for(int n = 0; n < totalElements; n++)
     {
       dataUi[n] += b * dataFi[n];
     }
   }
 
   const T oneDiv6 = 1. / 6.;
-  for(int n = 0; n < Ui.getSize(); n++)
+  for(int n = 0; n < totalElements; n++)
   {
     dataUn[n] += dt * oneDiv6 * dataUi[n];
   }
@@ -112,8 +117,10 @@ void RungeKutta4<T>::setFi(DataStruct<T> &_F)
 {
   T *dataFi = fi[currentStep].getData();
   const T *dataF  = _F.getData();
+  
+  int totalElements = Ui.getSize() * 3;
 
-  for(int n = 0; n < Ui.getSize(); n++)
+  for(int n = 0; n < totalElements; n++)
   {
     dataFi[n] = dataF[n];
   }

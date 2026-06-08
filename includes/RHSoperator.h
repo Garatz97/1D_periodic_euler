@@ -25,6 +25,9 @@ private:
   // structure containing the RHS values
   DataStruct<T> RHS;
   
+  // NUEVO: structure containing the flux values (Optimización de memoria)
+  DataStruct<T> flux;
+  
   // reference to current solution
   DataStruct<T> &U;
 
